@@ -23,7 +23,7 @@ class Config extends Command
      */
     protected function configure()
     {
-        $this->setName('weixin:config')
+        $this->setName('micromch:config')
             ->setDescription('send wechat config to config dir');
     }
 

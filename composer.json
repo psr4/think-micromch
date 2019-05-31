@@ -1,16 +1,10 @@
 {
-  "name": "yandy/wechat-xiaowei",
+  "name": "psr4/think-micromch",
   "description": "Wechat Small Micro Businessmen php sdk",
   "keywords": [
     "wechat"
   ],
   "minimum-stability": "dev",
-  "authors": [
-    {
-      "name": "yandy",
-      "email": "yandycom@126.com"
-    }
-  ],
   "require": {},
   "autoload": {
     "psr-4": {
