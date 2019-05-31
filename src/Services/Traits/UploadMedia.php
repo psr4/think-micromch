@@ -30,7 +30,6 @@ trait UploadMedia
         // 判断图片地址是否为空，空的话就调用图片上传方法，把图片上传到服务器
         empty($this->media_addr) && $media = $this->saveImg();
 
-
         // 判断图片是否存在
         if (!file_exists($this->media_addr))
             throw new WxException(10001);
@@ -46,8 +45,6 @@ trait UploadMedia
             "content-type:multipart/form-data",
         ];
         $res = $this->httpsRequest($url, $data, $header, true);
-        var_dump($res); die;
-
         // 处理返回值
         $rt = $this->disposeReturn($res, ['media_id']);
 
@@ -82,7 +79,7 @@ trait UploadMedia
      * setMediaAddr 设置图片地址
      * @param $media
      */
-    protected function setMediaAddr($media_addr)
+    public function setMediaAddr($media_addr)
     {
         $this->media_addr = $media_addr;
     }

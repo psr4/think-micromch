@@ -1,17 +1,16 @@
 <?php
 /**
  * BaseWechat.php
- *
  * Created by PhpStorm.
  * author: yandy  <yandycom@126.com>
- * DateTime: 2019-05-07
+ * DateTime: 2019-04-25
  */
 
 namespace wei;
 
 
+use think\facade\Config;
 use wei\Exception\WxException;
-
 
 /**
  * Class BaseWechat
@@ -26,7 +25,7 @@ class BaseWechat
     const DIR = __DIR__;
 
     //小程序appid
-    protected  $appid;
+    protected $appid;
 
     //小程序secret
     protected $secret;
@@ -52,9 +51,6 @@ class BaseWechat
     // 私钥地址
     protected $privateKeyAddr;
 
-    //公钥地址
-    protected $sslCertAddr;
-
 
     protected $uid;
 
@@ -62,18 +58,18 @@ class BaseWechat
     {
         // 获取配置
 
-        $this->mch_id    = $wechatConfig['mch_id'];
+        $wechatConfig = array_merge(Config::get('weixin.'), $wechatConfig);
+        $this->mch_id = $wechatConfig['mch_id'];
         $this->serial_no = $wechatConfig['serial_no'];
-        $this->aes_key   = $wechatConfig['aes_key'];
-        $this->appid   = $wechatConfig['appid'];
-        $this->secret   = $wechatConfig['secret'];
-        $this->diy_key   = $wechatConfig['diy_key'];
-        $this->uid       = 0;
-
-        $this->privateKeyAddr = self::DIR . '/Certificate/apiclient_key.pem';
-        $this->sslCertAddr = self::DIR . '/Certificate/apiclient_cert.pem';
-        $this->newResponseDataAddr = self::DIR . '/Certificate/jiemi.json';
-        $this->publicKeyAddr = self::DIR . '/Certificate/jiemi.pem';
+        $this->aes_key = $wechatConfig['aes_key'];
+        $this->appid = $wechatConfig['appid'];
+        $this->secret = $wechatConfig['secret'];
+        $this->diy_key = $wechatConfig['diy_key'];
+        $this->uid = 0;
+        $dir = isset($wechatConfig['dir']) ? $wechatConfig['dir'] : app()->getRootPath() . 'cert/';
+        $this->privateKeyAddr = $wechatConfig['privateKeyAddr'];
+        $this->newResponseDataAddr = '/jiemi.json';
+        $this->publicKeyAddr = '/jiemi.pem';
     }
 
 
@@ -114,12 +110,12 @@ class BaseWechat
         }
         curl_setopt($curl, CURLOPT_HEADER, true);    // 是否需要响应 header
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        $output          = curl_exec($curl);
-        $header_size     = curl_getinfo($curl, CURLINFO_HEADER_SIZE);    // 获得响应结果里的：头大小
+        $output = curl_exec($curl);
+        $header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);    // 获得响应结果里的：头大小
         $response_header = substr($output, 0, $header_size);    // 根据头大小去获取头信息内容
-        $http_code       = curl_getinfo($curl, CURLINFO_HTTP_CODE);    // 获取响应状态码
-        $response_body   = substr($output, $header_size);
-        $error           = curl_error($curl);
+        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);    // 获取响应状态码
+        $response_body = substr($output, $header_size);
+        $error = curl_error($curl);
         curl_close($curl);
 
 
@@ -134,8 +130,8 @@ class BaseWechat
     protected function parseHeaders($header)
     {
         $headers = explode("\r\n", $header);
-        $head    = array();
-        array_map(function($v) use (&$head) {
+        $head = array();
+        array_map(function ($v) use (&$head) {
             $t = explode(':', $v, 2);
             if (isset($t[1])) {
                 $head[trim($t[0])] = trim($t[1]);
@@ -158,10 +154,10 @@ class BaseWechat
      */
     protected function getRandChar($length = 32)
     {
-        $str    = NULL;
+        $str = NULL;
         $strPol = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
         $newStr = str_shuffle($strPol);
-        $max    = strlen($strPol) - 1;
+        $max = strlen($strPol) - 1;
         for ($i = 0; $i < $length; $i++) {
             $str .= $newStr[mt_rand(0, $max)];    // rand($min,$max)生成介于min和max两个数之间的一个随机整数
         }
@@ -229,9 +225,10 @@ class BaseWechat
 
     protected function getSSLCertPath()
     {
+        $wechatConfig = Config::get('weixin.');
         return [
-            $this->sslCertAddr,
-            $this->privateKeyAddr
+            $wechatConfig['sslCertAddr'],
+            $wechatConfig['privateKeyAddr'],
         ];
     }
 
@@ -287,7 +284,7 @@ class BaseWechat
     protected function getMillisecond()
     {
         list($msec, $sec) = explode(' ', microtime());
-        $msectime = (float) sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
+        $msectime = (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
         return $msectime;
     }
 
@@ -314,7 +311,7 @@ class BaseWechat
             if ($this->checkSign($rt)) {
                 if (!empty($need_fields)) {
                     $need = [];
-                    array_map(function($v) use ($rt, &$need) {
+                    array_map(function ($v) use ($rt, &$need) {
                         $need[$v] = $rt[$v] ?? '';
                     }, $need_fields);
                     return array_merge($need, $arr);
